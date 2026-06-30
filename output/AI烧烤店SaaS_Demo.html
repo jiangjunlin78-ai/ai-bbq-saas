@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI烧烤店SaaS - 智能餐饮管理系统</title>
+<style>
+:root {
+  --p: #FF6B35; --a: #7C3AED; --bg: #0F0F1A; --bg2: #1A1A2E;
+  --card: #1E1E35; --t1: #F0F0F5; --t2: #B0B0C0; --t3: #6B6B80;
+  --s: #22C55E; --d: #EF4444; --w: #F59E0B; --i: #3B82F6;
+  --border: rgba(255,255,255,0.06); --radius: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  --sidebar-w: 240px; --header-h: 56px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;overflow-x:hidden}
+.app{display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform .3s}
+.sidebar-logo{padding:20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sidebar-logo .logo-icon{font-size:28px}
+.sidebar-logo .logo-text{font-size:18px;font-weight:800;color:var(--p);letter-spacing:-0.5px}
+.sidebar-logo .logo-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.sidebar-nav{flex:1;padding:12px;overflow-y:auto}
+.nav-section{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;padding:16px 12px 8px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;color:var(--t2);cursor:pointer;transition:.2s;margin:2px 0}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--t1)}
+.nav-item.active{background:rgba(255,107,53,0.12);color:var(--p);font-weight:600}
+.nav-item .ni-icon{font-size:18px;width:24px;text-align:center}
+.nav-item .ni-badge{margin-left:auto;min-width:20px;height:20px;line-height:20px;text-align:center;background:var(--d);color:#fff;border-radius:10px;font-size:11px;font-weight:600}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+.sidebar-footer .user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;transition:.2s}
+.sidebar-footer .user-card:hover{background:rgba(255,255,255,0.04)}
+.sidebar-footer .uc-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--a));display:flex;align-items:center;justify-content:center;font-size:18px}
+.sidebar-footer .uc-info{flex:1;overflow:hidden}
+.sidebar-footer .uc-name{font-size:13px;font-weight:600;color:var(--t1)}
+.sidebar-footer .uc-role{font-size:11px;color:var(--t3)}
+/* Main */
+.main{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh}
+.header{height:var(--header-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:50}
+.header .page-title{font-size:18px;font-weight:700}
+.header .header-actions{display:flex;align-items:center;gap:12px}
+.header .ha-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.04);border:none;color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.header .ha-btn:hover{background:rgba(255,255,255,0.08);color:var(--t1)}
+.content{padding:20px 24px;flex:1}
+/* Mobile */
+.mobile-toggle{display:none;position:fixed;top:12px;left:12px;z-index:200;width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);color:var(--t1);font-size:20px;cursor:pointer;align-items:center;justify-content:center}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .mobile-toggle{display:flex}
+  .content{padding:14px}
+  .header{padding:0 14px;padding-left:56px}
+}
+@media(max-width:640px){
+  .content{padding:10px}
+}
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;transition:.2s}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:700}
+.card-sub{font-size:12px;color:var(--t3)}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:.2s;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--p),#E55A2B);color:#fff;box-shadow:0 2px 8px rgba(255,107,53,0.3)}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(255,107,53,0.4)}
+.btn-outline{background:transparent;border:1.5px solid var(--p);color:var(--p)}
+.btn-outline:hover{background:rgba(255,107,53,0.08)}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--t2)}
+.btn-ghost:hover{background:rgba(255,255,255,0.1);color:var(--t1)}
+.btn-success{background:var(--s);color:#fff}
+.btn-danger{background:var(--d);color:#fff}
+.btn-warn{background:var(--w);color:#000}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:8px}
+.btn-lg{padding:14px 28px;font-size:16px;border-radius:12px}
+.btn-block{width:100%}
+.btn-xl{padding:18px 40px;font-size:18px;border-radius:14px;font-weight:700}
+/* Stats */
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.stat-card .st-value{font-size:28px;font-weight:800;color:var(--p)}
+.stat-card .st-label{font-size:12px;color:var(--t3);margin-top:4px}
+.stat-card .st-change{font-size:12px;margin-top:4px;font-weight:600}
+.stat-card .st-change.up{color:var(--s)}.stat-card .st-change.down{color:var(--d)}
+.stat-card.warn .st-value{color:var(--d)}.stat-card.good .st-value{color:var(--s)}
+.stat-card.accent .st-value{color:var(--a)}
+/* Tables */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:12px 16px;background:rgba(255,255,255,0.02);color:var(--t3);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--t2)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+/* Tags */
+.tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.tag-orange{background:rgba(255,107,53,0.15);color:var(--p)}
+.tag-green{background:rgba(34,197,94,0.15);color:var(--s)}
+.tag-red{background:rgba(239,68,68,0.15);color:var(--d)}
+.tag-yellow{background:rgba(245,158,11,0.15);color:var(--w)}
+.tag-blue{background:rgba(59,130,246,0.15);color:var(--i)}
+.tag-purple{background:rgba(124,58,237,0.15);color:var(--a)}
+/* Product grid */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+@media(max-width:640px){.prod-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+.prod-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;gap:12px;transition:.2s;cursor:pointer}
+.prod-card:hover{border-color:rgba(255,107,53,0.3)}
+.prod-card .pc-img{width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.prod-card .pc-info{flex:1;overflow:hidden}
+.prod-card .pc-name{font-size:15px;font-weight:600;color:var(--t1)}
+.prod-card .pc-desc{font-size:11px;color:var(--t3);margin-top:2px}
+.prod-card .pc-price{font-size:18px;font-weight:700;color:var(--p);margin-top:4px}
+.prod-card .pc-price .unit{font-size:11px;color:var(--t3);font-weight:400}
+.prod-card .pc-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.prod-card .pc-add{width:36px;height:36px;border-radius:50%;background:var(--p);color:#fff;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.prod-card .pc-add:active{transform:scale(.9)}
+.prod-card .pc-qty{display:flex;align-items:center;gap:6px}
+.prod-card .pc-qty button{width:28px;height:28px;border-radius:50%;border:2px solid var(--p);background:transparent;color:var(--p);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.prod-card .pc-qty span{min-width:24px;text-align:center;font-weight:700;font-size:15px}
+.prod-card .pc-badges{display:flex;gap:4px;margin-top:4px}
+/* Categories */
+.cat-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none}
+.cat-tabs::-webkit-scrollbar{display:none}
+.cat-tab{padding:8px 16px;border-radius:20px;font-size:13px;color:var(--t2);background:rgba(255,255,255,0.04);white-space:nowrap;cursor:pointer;transition:.2s;border:none}
+.cat-tab.active{background:var(--p);color:#fff;font-weight:600}
+/* Cart bar */
+.cart-bar{position:sticky;bottom:0;background:var(--bg2);border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;margin:0 -24px;z-index:40}
+@media(max-width:640px){.cart-bar{margin:0 -10px;padding:10px 14px}}
+.cart-bar .cb-left{display:flex;align-items:center;gap:12px;cursor:pointer}
+.cart-bar .cb-icon{width:44px;height:44px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;position:relative}
+.cart-bar .cb-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;line-height:20px;text-align:center;background:var(--d);color:#fff;border-radius:10px;font-size:11px;font-weight:700}
+.cart-bar .cb-total{font-size:18px;font-weight:700;color:var(--p)}
+.cart-bar .cb-submit{padding:12px 28px;background:var(--p);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
+/* Tables */
+.table-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+.table-card{padding:16px 12px;text-align:center;border-radius:12px;border:2px solid var(--border);cursor:pointer;transition:.2s}
+.table-card:hover{border-color:var(--p)}
+.table-card.free{background:rgba(34,197,94,0.05)}
+.table-card.occupied{background:rgba(239,68,68,0.05);opacity:.5;pointer-events:none}
+.table-card .tc-code{font-size:18px;font-weight:700;display:block}
+.table-card .tc-cap{font-size:11px;color:var(--t3)}
+.table-card .tc-status{font-size:10px;margin-top:4px;display:block}
+.table-card.free .tc-status{color:var(--s)}.table-card.occupied .tc-status{color:var(--d)}
+/* Modal */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:flex-end;justify-content:center}
+.modal-sheet{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;padding:24px;border:1px solid var(--border)}
+.modal-sheet .ms-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-sheet .ms-title{font-size:17px;font-weight:700}
+.modal-sheet .ms-close{font-size:20px;color:var(--t3);cursor:pointer;background:none;border:none}
+/* Spice popup */
+.spice-mask{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:310;display:flex;align-items:flex-end;justify-content:center}
+.spice-popup{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:24px 20px;border:1px solid var(--border)}
+.spice-popup .sp-close{float:right;font-size:20px;color:var(--t3);cursor:pointer;background:none;border:none}
+.spice-popup .sp-name{font-size:20px;font-weight:700;margin-bottom:4px}
+.spice-popup .sp-price{font-size:14px;color:var(--p);margin-bottom:20px}
+.spice-popup .sp-section{margin-bottom:18px}
+.spice-popup .sp-label{font-size:12px;color:var(--t3);margin-bottom:8px;display:block}
+.spice-popup .sp-tags{display:flex;gap:8px;flex-wrap:wrap}
+.spice-popup .sp-tag{padding:8px 18px;border-radius:20px;font-size:13px;color:var(--t2);background:rgba(255,255,255,0.04);border:1.5px solid transparent;cursor:pointer;transition:.2s}
+.spice-popup .sp-tag.active{border-color:var(--p);color:var(--p);background:rgba(255,107,53,0.1)}
+.spice-popup .sp-qty-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--border)}
+.spice-popup .sp-qty-ctrl{display:flex;align-items:center;gap:12px}
+.spice-popup .sp-qty-ctrl button{width:34px;height:34px;border-radius:50%;border:2px solid var(--p);background:transparent;color:var(--p);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.spice-popup .sp-qty-ctrl span{min-width:28px;text-align:center;font-size:17px;font-weight:700}
+.spice-popup .sp-footer{margin-top:8px;padding:12px;background:linear-gradient(135deg,rgba(255,107,53,0.12),rgba(255,149,0,0.08));border-radius:12px;border:1px solid rgba(255,107,53,0.25)}
+.spice-popup .sp-add-btn{width:100%;padding:12px;background:linear-gradient(135deg,#FF6B35,#FF8C00);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}
+/* Kitchen order card */
+.kitchen-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.kitchen-card.urgent{border-left:3px solid var(--d);background:rgba(239,68,68,0.04)}
+.kitchen-card .kc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.kitchen-card .kc-table{font-size:17px;font-weight:700}
+.kitchen-card .kc-time{font-size:12px;color:var(--t3)}
+.kitchen-card .kc-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.kitchen-card .kc-item:last-child{border-bottom:none}
+.kitchen-card .kc-item.done{opacity:.4;text-decoration:line-through}
+.kitchen-card .kc-item-name{font-size:14px}
+.kitchen-card .kc-item-qty{font-size:16px;font-weight:700;color:var(--p);margin-right:12px}
+/* Chat */
+.chat-area{display:flex;flex-direction:column;height:calc(100vh - var(--header-h) - 80px)}
+.chat-messages{flex:1;overflow-y:auto;padding:12px 0}
+.chat-msg{margin-bottom:14px;animation:msgIn .3s ease-out}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.user{display:flex;justify-content:flex-end}
+.chat-msg .bubble{display:inline-block;max-width:80%;padding:10px 16px;border-radius:12px;font-size:14px;line-height:1.6;white-space:pre-wrap}
+.chat-msg.ai .bubble{background:rgba(255,255,255,0.04);color:var(--t1);border-bottom-left-radius:4px}
+.chat-msg.user .bubble{background:rgba(255,107,53,0.15);color:var(--t1);border-bottom-right-radius:4px}
+.chat-input-area{display:flex;gap:8px;padding:12px 0;border-top:1px solid var(--border)}
+.chat-input-area input{flex:1;height:42px;padding:0 16px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:21px;font-size:14px;color:var(--t1);outline:none}
+.chat-input-area input::placeholder{color:var(--t3)}
+.chat-input-area button{padding:10px 20px;background:var(--p);color:#fff;border:none;border-radius:21px;font-size:14px;font-weight:600;cursor:pointer}
+.quick-words{display:flex;gap:6px;padding:8px 0;flex-wrap:wrap}
+.quick-words span{padding:6px 14px;background:rgba(255,255,255,0.04);border-radius:16px;font-size:12px;color:var(--t2);cursor:pointer;transition:.2s}
+.quick-words span:hover{background:rgba(255,107,53,0.1);color:var(--p)}
+/* Toast */
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.88);color:#fff;padding:10px 24px;border-radius:10px;font-size:14px;z-index:999;pointer-events:none;opacity:0;transition:opacity .25s}
+.toast.show{opacity:1}
+/* Bar chart */
+.bar-item{display:flex;align-items:center;gap:10px;padding:6px 0}
+.bar-label{font-size:12px;color:var(--t2);min-width:60px;text-align:right}
+.bar-track{flex:1;height:20px;background:rgba(255,255,255,0.03);border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;border-radius:10px;transition:width .6s ease}
+.bar-val{font-size:11px;color:var(--t3);min-width:40px}
+/* Login */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:48px 40px;max-width:420px;width:100%;text-align:center}
+.login-card .lc-icon{font-size:56px;margin-bottom:16px}
+.login-card .lc-title{font-size:28px;font-weight:800;color:var(--p);margin-bottom:4px}
+.login-card .lc-sub{font-size:14px;color:var(--t3);margin-bottom:32px}
+.login-card .lc-features{text-align:left;margin-bottom:32px}
+.login-card .lc-feat{display:flex;align-items:center;padding:8px 0;font-size:14px;color:var(--t2);gap:10px}
+.login-card .lc-feat .lcf-icon{font-size:18px}
+.login-card .lc-btn{width:100%;height:50px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;border:none;margin-bottom:10px;transition:.2s}
+.login-card .lc-btn:active{transform:scale(.98)}
+.lc-btn-customer{background:linear-gradient(90deg,#07C160,#06AD56);color:#fff}
+.lc-btn-staff{background:linear-gradient(90deg,var(--p),#E55A2B);color:#fff}
+/* Utilities */
+.text-center{text-align:center}
+.text-right{text-align:right}
+.text-sm{font-size:12px}
+.text-xs{font-size:11px}
+.text-muted{color:var(--t3)}
+.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-6{margin-top:24px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}
+.flex-1{flex:1}
+.hidden{display:none !important}
+/* Empty */
+.empty-state{text-align:center;padding:60px 20px;color:var(--t3)}
+.empty-state .es-icon{font-size:48px;margin-bottom:12px}
+.empty-state .es-text{font-size:14px}
+/* Version compare */
+.ver-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ver-col{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center}
+.ver-col.pro{border-color:var(--a);background:rgba(124,58,237,0.04)}
+.ver-col .vc-name{font-size:16px;font-weight:700;display:block}
+.ver-col.pro .vc-name{color:var(--a)}
+.ver-col .vc-price{font-size:28px;font-weight:800;color:var(--p);display:block;margin:8px 0}
+.ver-col.pro .vc-price{color:var(--a)}
+.ver-col .vc-desc{font-size:11px;color:var(--t3)}
+.ver-col .vc-feats{margin-top:16px;text-align:left}
+.ver-col .vc-feat{font-size:13px;padding:4px 0;color:var(--t2)}
+.ver-col .vc-feat.no{color:var(--t3);text-decoration:line-through}
+/* Order detail */
+.order-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;border-left:3px solid var(--p)}
+.order-card .oc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.order-card .oc-no{font-size:13px;color:var(--p);font-weight:700}
+.order-card .oc-table{font-size:14px;font-weight:600;color:var(--t1)}
+.order-card .oc-time{font-size:11px;color:var(--t3)}
+.order-card .oc-item{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+
+/* ═══════ AI ORDER CONFIRM MODAL ═══════ */
+.order-confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:400;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;padding:20px}
+.order-confirm-dialog{background:var(--bg2);border:2px solid var(--p);border-radius:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;padding:32px 28px;box-shadow:0 20px 60px rgba(255,107,53,0.2),0 0 0 1px rgba(255,107,53,0.1) inset}
+.order-confirm-dialog .ocd-icon{font-size:48px;text-align:center;margin-bottom:8px}
+.order-confirm-dialog .ocd-title{font-size:22px;font-weight:800;text-align:center;color:var(--t1);margin-bottom:4px}
+.order-confirm-dialog .ocd-table{font-size:14px;color:var(--p);text-align:center;margin-bottom:20px;font-weight:600}
+.order-confirm-dialog .ocd-divider{height:1px;background:var(--border);margin:16px 0}
+.order-confirm-dialog .ocd-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;font-size:14px;color:var(--t2)}
+.order-confirm-dialog .ocd-item .ocd-name{flex:1}
+.order-confirm-dialog .ocd-item .ocd-qty{font-weight:700;color:var(--p);margin:0 12px;min-width:30px;text-align:center}
+.order-confirm-dialog .ocd-item .ocd-price{font-weight:600;color:var(--t1);min-width:60px;text-align:right}
+.order-confirm-dialog .ocd-total-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:2px solid var(--p);margin-top:8px}
+.order-confirm-dialog .ocd-total-label{font-size:16px;font-weight:600;color:var(--t1)}
+.order-confirm-dialog .ocd-total-price{font-size:26px;font-weight:800;color:var(--p)}
+.order-confirm-dialog .ocd-btns{display:flex;gap:14px;margin-top:24px}
+.order-confirm-dialog .ocd-btn-confirm{flex:1;padding:16px 0;background:linear-gradient(135deg,#FF6B35,#FF8C00);color:#fff;border:none;border-radius:14px;font-size:18px;font-weight:700;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(255,107,53,0.4)}
+.order-confirm-dialog .ocd-btn-confirm:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,107,53,0.5)}
+.order-confirm-dialog .ocd-btn-confirm:active{transform:scale(.97)}
+.order-confirm-dialog .ocd-btn-cancel{flex:1;padding:16px 0;background:rgba(255,255,255,0.06);color:var(--t2);border:1.5px solid rgba(255,255,255,0.1);border-radius:14px;font-size:18px;font-weight:600;cursor:pointer;transition:.2s}
+.order-confirm-dialog .ocd-btn-cancel:hover{background:rgba(255,255,255,0.1);color:var(--t1)}
+
+/* AI Order card in chat */
+.ai-order-card{background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.02));border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:14px;margin:8px 0;max-width:340px}
+.ai-order-card .aoc-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.ai-order-card .aoc-title{font-size:13px;font-weight:700;color:var(--s)}
+.ai-order-card .aoc-item{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--t2)}
+.ai-order-card .aoc-item .aoc-qty{font-weight:600;color:var(--p);margin:0 8px}
+.ai-order-card .aoc-total{text-align:right;font-size:16px;font-weight:800;color:var(--s);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.ai-typing{display:flex;gap:4px;padding:8px 16px}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--p);animation:typeBounce 1.2s infinite}
+.ai-typing span:nth-child(2){animation-delay:.15s}
+.ai-typing span:nth-child(3){animation-delay:.3s}
+@keyframes typeBounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.14)}
+/* Animations */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.anim-fade{animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">☰</button>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">🔥</span>
+    <div><div class="logo-text">AI烧烤店</div><div class="logo-sub">SaaS管理系统</div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">点餐服务</div>
+    <div class="nav-item" data-page="order" onclick="navTo('order')"><span class="ni-icon">🍖</span>扫码点单<span class="ni-badge" id="cartBadgeSide" style="display:none">0</span></div>
+    <div class="nav-item active" data-page="ai" onclick="navTo('ai')"><span class="ni-icon">🤖</span>AI助手</div>
+    <div class="nav-section">收银管理</div>
+    <div class="nav-item" data-page="kitchen" onclick="navTo('kitchen')"><span class="ni-icon">💰</span>收银结账</div>
+    <div class="nav-item" data-page="kds" onclick="navTo('kds')"><span class="ni-icon">🔥</span>KDS厨房屏</div>
+    <div class="nav-item" data-page="inventory" onclick="navTo('inventory')"><span class="ni-icon">📦</span>库存管理</div>
+    <div class="nav-section">数据分析</div>
+    <div class="nav-item" data-page="reports" onclick="navTo('reports')"><span class="ni-icon">📊</span>数据报表<span class="tag tag-purple" style="margin-left:auto;font-size:10px">Pro</span></div>
+    <div class="nav-item" data-page="customers" onclick="navTo('customers')"><span class="ni-icon">👥</span>顾客画像<span class="tag tag-purple" style="margin-left:auto;font-size:10px">Pro</span></div>
+    <div class="nav-section">设置</div>
+    <div class="nav-item" data-page="tables-mgr" onclick="navTo('tables-mgr')"><span class="ni-icon">🍖</span>桌台管理</div>
+    <div class="nav-item" data-page="menu-mgr" onclick="navTo('menu-mgr')"><span class="ni-icon">📋</span>菜品管理</div>
+    <div class="nav-item" data-page="staff" onclick="navTo('staff')"><span class="ni-icon">👤</span>员工管理</div>
+    <div class="nav-item" data-page="shop" onclick="navTo('shop')"><span class="ni-icon">🏪</span>店铺设置</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="navTo('profile')">
+      <div class="uc-avatar">👨‍🍳</div>
+      <div class="uc-info"><div class="uc-name">老王</div><div class="uc-role">店长 · Pro版</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main" id="main">
+  <header class="header">
+    <span class="page-title" id="pageTitle">AI助手</span>
+    <div class="header-actions">
+      <span style="font-size:13px;color:var(--t3)" id="tableIndicator"></span>
+    </div>
+  </header>
+  <div class="content" id="content"></div>
+</main>
+
+<script>
+// ========== DATA ==========
+var VERSION='pro';
+var page='ai', activeCat='all', reportTab='daily', invTab='overview', kdsMode='kds-table', kdsPage=0, kdsFixedOrder=[];
+var selectedTable=null, aiMessages=[], activeKitchenTag='bbq', cartOpen=false, checkoutTab='active';
+var aiPendingOrder=null;
+var aiIsLoading=false;
+var aiApiOnline=undefined;
+
+var DB={
+  orderSeq:2,
+  products:[
+    {id:1,name:'牛肉串',price:4,unit:'串',desc:'精选牛肉，炭火烤制',cat:'bbq',tag:'bbq',stock:40,alert:10,hot:true,emoji:'🍢'},
+    {id:2,name:'牛板筋',price:5,unit:'串',desc:'劲道有嚼劲',cat:'bbq',tag:'bbq',stock:30,alert:10,emoji:'🥩'},
+    {id:3,name:'羊肉串',price:3,unit:'串',desc:'新鲜羊肉，炭火现烤',cat:'bbq',tag:'bbq',stock:50,alert:10,hot:true,emoji:'🥓'},
+    {id:4,name:'羊腰子',price:12,unit:'串',desc:'滋补羊腰',cat:'bbq',tag:'bbq',stock:20,alert:5,emoji:'🍖'},
+    {id:5,name:'羊排',price:25,unit:'份',desc:'整块羊排，外焦里嫩',cat:'bbq',tag:'bbq',stock:15,alert:5,hot:true,emoji:'🍗'},
+    {id:6,name:'羊板筋',price:6,unit:'串',desc:'羊板筋，口感独特',cat:'bbq',tag:'bbq',stock:25,alert:10,emoji:'🥙'},
+    {id:7,name:'五花肉',price:4,unit:'串',desc:'肥瘦相间，香而不腻',cat:'bbq',tag:'bbq',stock:35,alert:10,emoji:'🥘'},
+    {id:8,name:'烤排骨',price:18,unit:'份',desc:'秘制烤排骨',cat:'bbq',tag:'bbq',stock:20,alert:5,emoji:'🍲'},
+    {id:9,name:'鸡翅',price:8,unit:'串',desc:'秘制酱料腌制',cat:'bbq',tag:'bbq',stock:30,alert:10,hot:true,emoji:'🍳'},
+    {id:10,name:'鸡胗',price:3,unit:'串',desc:'脆嫩鸡胗',cat:'bbq',tag:'bbq',stock:40,alert:10,emoji:'🫘'},
+    {id:11,name:'鸡心',price:3,unit:'串',desc:'香嫩鸡心',cat:'bbq',tag:'bbq',stock:35,alert:10,emoji:'🫀'},
+    {id:12,name:'鸡腿',price:10,unit:'份',desc:'整只鸡腿，肉质饱满',cat:'bbq',tag:'bbq',stock:25,alert:5,emoji:'🍡'},
+    {id:13,name:'烤虾',price:15,unit:'份',desc:'新鲜大虾，蒜蓉烤制',cat:'seafood',tag:'seafood',stock:20,alert:5,hot:true,emoji:'🦐'},
+    {id:14,name:'烤生蚝',price:18,unit:'个',desc:'蒜蓉粉丝生蚝',cat:'seafood',tag:'seafood',stock:30,alert:10,emoji:'🦪'},
+    {id:15,name:'烤扇贝',price:16,unit:'个',desc:'蒜蓉粉丝扇贝',cat:'seafood',tag:'seafood',stock:25,alert:10,emoji:'🐚'},
+    {id:16,name:'烤鱿鱼',price:12,unit:'份',desc:'整只鱿鱼，Q弹有嚼劲',cat:'seafood',tag:'seafood',stock:20,alert:5,emoji:'🦑'},
+    {id:17,name:'烤鱼',price:48,unit:'份',desc:'整条烤鱼，麻辣鲜香',cat:'seafood',tag:'seafood',stock:10,alert:3,hot:true,emoji:'🐟'},
+    {id:18,name:'烤茄子',price:10,unit:'份',desc:'蒜蓉烤茄子',cat:'veggie',tag:'bbq',stock:20,alert:10,emoji:'🍆'},
+    {id:19,name:'烤韭菜',price:6,unit:'份',desc:'时令韭菜',cat:'veggie',tag:'bbq',stock:0,alert:5,emoji:'🥬'},
+    {id:20,name:'烤金针菇',price:8,unit:'份',desc:'蒜蓉金针菇',cat:'veggie',tag:'bbq',stock:25,alert:10,emoji:'🍄'},
+    {id:21,name:'烤土豆片',price:5,unit:'份',desc:'薄切土豆片',cat:'veggie',tag:'bbq',stock:30,alert:10,emoji:'🥔'},
+    {id:22,name:'烤玉米',price:8,unit:'根',desc:'甜玉米，炭火烤制',cat:'veggie',tag:'bbq',stock:20,alert:5,emoji:'🌽'},
+    {id:23,name:'烤馒头片',price:4,unit:'份',desc:'金黄馒头片',cat:'veggie',tag:'bbq',stock:40,alert:10,emoji:'🍞'},
+    {id:24,name:'烤豆腐皮',price:6,unit:'份',desc:'香辣豆腐皮',cat:'veggie',tag:'bbq',stock:35,alert:10,emoji:'🥞'},
+    {id:25,name:'烤面筋',price:5,unit:'串',desc:'劲道面筋',cat:'veggie',tag:'bbq',stock:30,alert:10,emoji:'🧄'},
+    {id:26,name:'烤青椒',price:4,unit:'份',desc:'微辣青椒',cat:'veggie',tag:'bbq',stock:25,alert:10,emoji:'🫑'},
+    {id:27,name:'拍黄瓜',price:8,unit:'份',desc:'蒜泥拍黄瓜',cat:'cold',tag:'cold',stock:30,alert:10,emoji:'🥒'},
+    {id:28,name:'凉拌木耳',price:10,unit:'份',desc:'酸辣木耳',cat:'cold',tag:'cold',stock:25,alert:10,emoji:'🍇'},
+    {id:29,name:'毛豆',price:6,unit:'份',desc:'盐水毛豆',cat:'cold',tag:'cold',stock:40,alert:10,emoji:'🫛'},
+    {id:30,name:'花生米',price:5,unit:'份',desc:'油炸花生米',cat:'cold',tag:'cold',stock:50,alert:10,emoji:'🥜'},
+    {id:31,name:'皮蛋豆腐',price:12,unit:'份',desc:'皮蛋拌豆腐',cat:'cold',tag:'cold',stock:20,alert:5,emoji:'🫟'},
+    {id:32,name:'泡椒凤爪',price:15,unit:'份',desc:'酸辣泡椒凤爪',cat:'cold',tag:'cold',stock:25,alert:10,emoji:'🐣'},
+    {id:33,name:'炸鸡排',price:15,unit:'份',desc:'外酥里嫩',cat:'fried',tag:'fried',stock:15,alert:5,emoji:'🥧'},
+    {id:34,name:'炸薯条',price:10,unit:'份',desc:'金黄薯条',cat:'fried',tag:'fried',stock:30,alert:10,emoji:'🍟'},
+    {id:35,name:'炸酥肉',price:18,unit:'份',desc:'香酥五花肉',cat:'fried',tag:'fried',stock:20,alert:5,emoji:'🥮'},
+    {id:36,name:'小酥肉',price:16,unit:'份',desc:'川味小酥肉',cat:'fried',tag:'fried',stock:25,alert:10,emoji:'🧆'},
+    {id:37,name:'炒饭',price:15,unit:'份',desc:'蛋炒饭',cat:'staple',tag:'staple',stock:20,alert:5,emoji:'🍚'},
+    {id:38,name:'炒面',price:16,unit:'份',desc:'肉丝炒面',cat:'staple',tag:'staple',stock:18,alert:5,emoji:'🍜'},
+    {id:39,name:'啤酒',price:12,unit:'瓶',desc:'冰镇啤酒',cat:'drink',tag:'drink',stock:5,alert:10,emoji:'🍺'},
+    {id:40,name:'可乐',price:5,unit:'瓶',desc:'冰可乐',cat:'drink',tag:'drink',stock:40,alert:10,emoji:'🥤'},
+    {id:41,name:'雪碧',price:5,unit:'瓶',desc:'冰镇雪碧',cat:'drink',tag:'drink',stock:35,alert:10,emoji:'🧊'},
+    {id:42,name:'凉茶',price:6,unit:'瓶',desc:'清热凉茶',cat:'drink',tag:'drink',stock:25,alert:10,emoji:'🍵'},
+    {id:43,name:'酸梅汤',price:8,unit:'杯',desc:'冰镇酸梅汤',cat:'drink',tag:'drink',stock:30,alert:10,emoji:'🫖'}
+  ],
+  cats:[
+    {id:1,name:'烧烤',type:'bbq',emoji:'🔥'},
+    {id:2,name:'饮品',type:'drink',emoji:'🥤'},
+    {id:3,name:'炸物',type:'fried',emoji:'🍗'},
+    {id:4,name:'凉菜',type:'cold',emoji:'🥒'},
+    {id:5,name:'海鲜',type:'seafood',emoji:'🦐'},
+    {id:6,name:'素菜',type:'veggie',emoji:'🥬'},
+    {id:7,name:'主食',type:'staple',emoji:'🍚'}
+  ],
+  tables:{areas:[
+    {id:1,name:'大厅',tables:[{id:1,code:'A01',cap:4,status:'free'},{id:2,code:'A02',cap:4,status:'free'},{id:3,code:'A03',cap:6,status:'free'},{id:4,code:'A05',cap:4,status:'free'}]},
+    {id:2,name:'包间',tables:[{id:5,code:'B01',cap:8,status:'free'},{id:6,code:'B02',cap:4,status:'free'}]}
+  ]},
+  orders:[
+    {id:1,no:'0529A0001',table:'A05',time:'20:15',items:[{id:1,name:'羊肉串',qty:10,tag:'bbq',status:'pending',spice:'微辣'},{id:2,name:'鸡翅',qty:5,tag:'bbq',status:'pending',spice:'中辣'},{id:3,name:'啤酒',qty:3,tag:'drink',status:'ready',spice:'正常冰'}]},
+    {id:2,no:'0529A0002',table:'B01',time:'20:18',items:[{id:4,name:'烤茄子',qty:2,tag:'bbq',status:'pending',spice:'微辣'},{id:5,name:'炸鸡排',qty:1,tag:'fried',status:'pending',spice:'默认'}]}
+  ],
+  orderHistory:[],
+  staff:[{id:1,name:'老王',role:'店长',phone:'13800000001'},{id:2,name:'小李',role:'店员',phone:'13800000002'},{id:3,name:'大厨张',role:'后厨',phone:'13800000003'}],
+  reports:{daily:{revenue:580,orders:8},monthly:{revenue:12400,orders:186},hot:[{name:'牛肉串',qty:420},{name:'羊肉串',qty:380},{name:'鸡翅',qty:280},{name:'啤酒',qty:245},{name:'烤虾',qty:198},{name:'五花肉',qty:165},{name:'烤生蚝',qty:142},{name:'烤茄子',qty:121},{name:'可乐',qty:108},{name:'拍黄瓜',qty:95}]},
+  deepData:{
+    avgOrderTrend:[72.5,68.2,70.1,75.3,78.6,80.2,82.5],
+    tableTurnover:{weekday:1.8,weekend:2.5,avg:2.1},
+    revenuePerSqm:156.8,
+    customerSegments:[{type:'学生群体',pct:0.35,avgSpend:42.5,freq:1.2},{type:'上班族',pct:0.28,avgSpend:68.8,freq:2.5},{type:'家庭聚餐',pct:0.22,avgSpend:125.6,freq:0.8},{type:'夜宵党',pct:0.15,avgSpend:58.3,freq:3.2}],
+    tastePreference:[{taste:'微辣',pct:0.45,avgSpend:65.2},{taste:'中辣',pct:0.32,avgSpend:72.8},{taste:'特辣',pct:0.15,avgSpend:58.5},{taste:'不辣',pct:0.08,avgSpend:48.6}],
+    peakHours:[{hour:'17:00',orders:12,revenue:860},{hour:'18:00',orders:28,revenue:2100},{hour:'19:00',orders:35,revenue:2650},{hour:'20:00',orders:42,revenue:3200},{hour:'21:00',orders:38,revenue:2850},{hour:'22:00',orders:25,revenue:1800},{hour:'23:00',orders:18,revenue:1250}],
+    anomalyAlerts:[{id:1,type:'异常订单',desc:'单笔订单金额¥520（超均值3倍）',time:'2026-05-25 20:15',level:'high'},{id:2,type:'库存周转',desc:'可乐库存周转率0.8（低于健康线1.2）',time:'2026-05-24',level:'medium'},{id:3,type:'客单价波动',desc:'今日客单价¥82.5（+15% vs 7日均值）',time:'2026-05-26',level:'medium'}],
+    repurchasePrediction:[{segment:'学生群体',prob:0.72,nextVisit:3},{segment:'上班族',prob:0.85,nextVisit:2},{segment:'家庭聚餐',prob:0.45,nextVisit:7},{segment:'夜宵党',prob:0.92,nextVisit:1}]
+  },
+  totalFlowLog:[
+    {type:'in',product:'羊肉串',qty:50,time:'2026-05-24 14:30',operator:'老王'},
+    {type:'out',product:'羊肉串',qty:10,time:'2026-05-24 18:15',order:'BBQ0529A001'},
+    {type:'in',product:'啤酒',qty:30,time:'2026-05-24 12:00',operator:'老王'},
+    {type:'out',product:'啤酒',qty:25,time:'2026-05-25 20:30',order:'BBQ0529A002'},
+    {type:'in',product:'鸡翅',qty:20,time:'2026-05-25 10:00',operator:'小李'}
+  ]
+};
+
+var Cart={
+  items:[], tableId:null, tableCode:'',
+  add:function(p,spice,qty){var q=qty||1;var s=spice||'默认';var e=this.items.find(function(i){return i.pid===p.id&&i.spice===s});if(e)e.qty+=q;else this.items.push({pid:p.id,name:p.name,price:p.price,qty:q,tag:p.tag,emoji:p.emoji||'',spice:s});DB.products.find(function(x){return x.id===p.id}).stock-=q;updateUI();},
+  remove:function(pid){this.items=this.items.filter(function(i){return i.pid!==pid});updateUI();},
+  updateQty:function(pid,q){var e=this.items.find(function(i){return i.pid===pid});if(!e)return;var diff=q-e.qty;var p=DB.products.find(function(x){return x.id===pid});if(p)p.stock-=diff;if(q<=0)this.remove(pid);else e.qty=q;updateUI();},
+  clear:function(){var self=this;this.items.forEach(function(i){var p=DB.products.find(function(x){return x.id===i.pid});if(p)p.stock+=i.qty;});this.items=[];updateUI();},
+  get total(){return this.items.reduce(function(s,i){return s+i.qty},0)},
+  get price(){return this.items.reduce(function(s,i){return s+i.price*i.qty},0)}
+};
+
+var KDS={
+  tableOrders:[], allOrders:[],
+  init:function(){
+    var self=this;this.tableOrders=[];this.allOrders=[];kdsFixedOrder=[];
+    DB.orders.forEach(function(order){
+      var tableInfo=null;
+      DB.tables.areas.forEach(function(a){var t=a.tables.find(function(tt){return tt.code===order.table});if(t)tableInfo=t;});
+      var to={tableCode:order.table,people:tableInfo?tableInfo.cap:4,items:[],orderNo:order.no};
+      var now=new Date();var parts=order.time.split(':');
+      var openDate=new Date(now.getFullYear(),now.getMonth(),now.getDate(),parseInt(parts[0]),parseInt(parts[1]));
+      to.elapsed=Math.max(1,Math.floor((now-openDate)/(1000*60)));
+      to.openTime=order.time;
+      order.items.forEach(function(item){
+        var product=DB.products.find(function(p){return p.name===item.name});
+        var tag=product?product.tag:'bbq';
+        var station=tag==='drink'?'饮料台':tag==='fried'?'炸台':tag==='cold'?'凉菜台':tag==='seafood'?'海鲜台':'烤台';
+        to.items.push({name:item.name,spice:item.spice||'默认',qty:item.qty,status:item.status==='served'?'served':(item.status==='cooked'?'cooked':'pending'),station:station,tag:tag});
+        if(item.status!=='served')self.allOrders.push({tableCode:order.table,name:item.name,spice:item.spice||'默认',qty:item.qty,status:item.status==='cooked'?'cooked':'pending',station:station});
+      });
+      if(to.items.length>0)self.tableOrders.push(to);
+    });
+  }
+};
+KDS.init();
+
+// 同步桌台状态：根据已有订单标记 occupied
+(function(){
+  var occupiedCodes={};
+  DB.orders.forEach(function(o){
+    if(!DB.orderHistory.some(function(h){return h.id===o.id})){occupiedCodes[o.table]=true;}
+  });
+  DB.tables.areas.forEach(function(a){
+    a.tables.forEach(function(t){
+      if(occupiedCodes[t.code]){t.status='occupied';}
+    });
+  });
+})();
+
+// ========== HELPERS ==========
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1800);}
+function cartQty(pid){return Cart.items.filter(function(i){return i.pid===pid}).reduce(function(s,i){return s+i.qty},0);}
+
+function showSpicePopup(pid){
+  var p=DB.products.find(function(x){return x.id===pid});if(!p||p.stock<=0)return;
+  var isDrink=p.cat==='drink';var isCold=p.cat==='cold';var isStaple=p.cat==='staple';
+  var labels=isDrink?['去冰','少冰','正常冰']:(isCold||isStaple?[]:['不辣','微辣','中辣','特辣']);
+  var labelName=isDrink?'冰量':'口味';var showFlavor=labels.length>0;
+  var curQty=cartQty(pid);var selFlavor=labels.length>0?labels[0]:'';var selQty=Math.max(1,curQty||1);
+  var bg=document.createElement('div');bg.className='spice-mask';
+  bg.innerHTML='<div class="spice-popup"><button class="sp-close" id="spClose">✕</button><div class="sp-name">'+p.emoji+' '+p.name+'</div><div class="sp-price">¥'+p.price+' / '+p.unit+'</div>'+(showFlavor?'<div class="sp-section"><span class="sp-label">'+labelName+'</span><div class="sp-tags" id="spTags">'+labels.map(function(s){return'<span class="sp-tag'+(s===selFlavor?' active':'')+'" data-flavor="'+s+'">'+s+'</span>';}).join('')+'</div></div>':'')+'<div class="sp-qty-row"><span>数量</span><div class="sp-qty-ctrl"><button class="sqbtn" id="sqMinus">−</button><span id="sqNum">'+selQty+'</span><button class="sqbtn" id="sqPlus">+</button></div></div><div class="sp-footer"><button class="sp-add-btn" id="spAdd">加入购物车 · ¥'+(p.price*selQty).toFixed(2)+'</button></div></div>';
+  document.body.appendChild(bg);
+  function upd(){document.getElementById('sqNum').textContent=selQty;document.getElementById('spAdd').textContent='加入购物车 · ¥'+(p.price*selQty).toFixed(2);}
+  document.getElementById('spClose').onclick=function(){document.body.removeChild(bg);};
+  bg.onclick=function(e){if(e.target===bg){document.body.removeChild(bg);}};
+  document.getElementById('sqMinus').onclick=function(){if(selQty>1){selQty--;upd();}};
+  document.getElementById('sqPlus').onclick=function(){selQty++;upd();};
+  var tags=document.getElementById('spTags')?document.getElementById('spTags').children:[];
+  for(var i=0;i<tags.length;i++){(function(idx){tags[idx].onclick=function(){for(var j=0;j<tags.length;j++)tags[j].classList.remove('active');tags[idx].classList.add('active');selFlavor=tags[idx].dataset.flavor;};})(i);}
+  document.getElementById('spAdd').onclick=function(){Cart.add(p,selFlavor||'',selQty);document.body.removeChild(bg);toast('已加入：'+p.name+' ×'+selQty);};
+}
+
+function submitOrder(){
+  if(Cart.total===0)return toast('购物车为空');
+  DB.orderSeq++;
+  var now=new Date();
+  var mm=String(now.getMonth()+1).padStart(2,'0');
+  var dd=String(now.getDate()).padStart(2,'0');
+  var no=mm+dd+'A'+String(DB.orderSeq).padStart(4,'0');
+  var items=Cart.items.map(function(i){return{id:Date.now()+Math.random(),name:i.name,spice:i.spice||'',qty:i.qty,tag:i.tag,status:'pending',price:i.price}});
+  DB.orders.unshift({id:DB.orders.length+1,no:no,table:Cart.tableCode||'A05',time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),items:items});
+  // Mark table as occupied
+  var tableCode=Cart.tableCode||'A05';
+  DB.tables.areas.forEach(function(a){a.tables.forEach(function(t){if(t.code===tableCode)t.status='occupied';})});
+  Cart.clear();KDS.init();toast('下单成功！'+no);renderPage();
+}
+
+function adjustStock(pid,delta){var p=DB.products.find(function(x){return x.id===pid});if(!p)return;p.stock=Math.max(0,p.stock+delta);toast(delta>0?p.name+' +'+delta:p.name+' '+delta);updateUI();}
+function restockAll(){var alerts=DB.products.filter(function(p){return p.stock<=p.alert});if(alerts.length===0)return toast('无需补货');alerts.forEach(function(p){p.stock=p.alert+10;});toast('已补货'+alerts.length+'种');updateUI();}
+
+function confirmItem(oid,iid){
+  var o=DB.orders.find(function(x){return x.id===oid});if(!o)return;
+  var item=o.items.find(function(x){return x.id===iid});if(!item)return;
+  item.status=item.status==='ready'?'pending':'ready';toast(item.status==='ready'?'出餐完成！':'已撤销出餐');renderPage();
+}
+
+// KDS
+function kdsMarkServed(tableCode,dishName,spice){
+  var orders=DB.orders.filter(function(o){return o.table===tableCode});
+  for(var oi=0;oi<orders.length;oi++){
+    var item=orders[oi].items.find(function(i){return i.name===dishName&&(i.spice||'')===spice&&(i.status==='pending'||i.status==='cooked')});
+    if(item){item.status='served';toast(tableCode+' · '+dishName+' 已上菜');break;}
+  }
+  KDS.init();renderPage();
+}
+function kdsMarkDishDone(dishName,spice){
+  var found=0;
+  DB.orders.forEach(function(o){o.items.forEach(function(i){if(i.name===dishName&&(i.spice||'')===spice&&i.status==='pending'){i.status='cooked';found++;}});});
+  if(found>0)toast(dishName+' ×'+found+' 已制作完成');KDS.init();kdsFixedOrder=[];renderPage();
+}
+function kdsMarkAllDone(dishName,spice,tableCode){
+  var found=0;
+  DB.orders.forEach(function(o){if(tableCode&&o.table!==tableCode)return;o.items.forEach(function(i){if(i.name===dishName&&(i.spice||'')===spice&&i.status==='cooked'){i.status='served';found++;}});});
+  if(found>0)toast(tableCode+' '+dishName+' 已传菜 ×'+found);KDS.init();renderPage();
+}
+
+// ========== BUILD MENU STRING FOR AI ==========
+function buildMenuString(){
+  var lines=[];
+  DB.cats.forEach(function(c){
+    var items=DB.products.filter(function(p){return p.cat===c.type});
+    var itemStr=items.map(function(p){
+      return p.name+' ¥'+p.price+'/'+p.unit+(p.stock<=0?'(售罄)':p.stock<=p.alert?'(仅剩'+p.stock+')':'');
+    }).join('、');
+    lines.push(c.emoji+' '+c.name+'：'+itemStr);
+  });
+  return lines.join('\n');
+}
+
+// ========== BUILD REALTIME CONTEXT FOR AI ==========
+// 每次对话前实时扫描数据库，确保DeepSeek拿到的是老板最新改过的数据
+function buildRealtimeContext(tableCode){
+  var ctx='';
+
+  // 1. 桌台信息：区域+容量
+  var tableInfo=null, areaName='未知区域';
+  DB.tables.areas.forEach(function(a){
+    a.tables.forEach(function(t){
+      if(t.code===tableCode){tableInfo=t;areaName=a.name;}
+    });
+  });
+  ctx+='## 🪑 当前桌台\n';
+  ctx+='- 桌号：'+tableCode+'（位于【'+areaName+'】）\n';
+  ctx+='- 容量：'+(tableInfo?tableInfo.cap:'?')+'人\n';
+  ctx+='- 这是你唯一服务的桌台，别搞混\n\n';
+
+  // 2. 口味规则：每个品类能选什么口味
+  ctx+='## 🌶️ 口味规则（按品类）\n';
+  DB.cats.forEach(function(c){
+    var sample=DB.products.find(function(p){return p.cat===c.type});
+    if(!sample)return;
+    if(c.type==='drink'){
+      ctx+='- '+c.emoji+' '+c.name+'：去冰 / 少冰 / 正常冰\n';
+    }else if(c.type==='cold'||c.type==='staple'){
+      ctx+='- '+c.emoji+' '+c.name+'：默认即可，无需选口味\n';
+    }else{
+      ctx+='- '+c.emoji+' '+c.name+'：不辣 / 微辣 / 中辣 / 特辣\n';
+    }
+  });
+
+  // 3. 菜单+库存+价格（实时）
+  ctx+='\n## 📋 完整菜单（价格/库存均为老板最新设置）\n';
+  DB.cats.forEach(function(c){
+    var items=DB.products.filter(function(p){return p.cat===c.type});
+    var hasStockIssue=items.some(function(p){return p.stock<=0||p.stock<=p.alert});
+    ctx+='### '+c.emoji+' '+c.name+(hasStockIssue?' ⚠️':'')+'\n';
+    items.forEach(function(p){
+      var status='';
+      if(p.stock<=0)status=' 【售罄！不可点】';
+      else if(p.stock<=p.alert)status=' 【仅剩'+p.stock+p.unit+'，快没了】';
+      ctx+='- '+p.name+'：¥'+p.price+'/'+p.unit+status+'\n';
+    });
+  });
+
+  // 4. 今日热销（实时）
+  ctx+='\n## 🔥 今日热销TOP5\n';
+  DB.reports.hot.slice(0,5).forEach(function(h,i){
+    ctx+='- '+(i+1)+'. '+h.name+'（已售'+h.qty+'份）\n';
+  });
+
+  // 5. 铁规则
+  ctx+='\n## ⚡ 铁规则\n';
+  ctx+='- 只能点菜单上有的菜，售罄的告知客人并推荐替代品\n';
+  ctx+='- 桌号固定为【'+tableCode+'】，死也不能改\n';
+  ctx+='- place_order时每项必须包含 name、qty、price、spice';
+
+  return ctx;
+}
+
+// ========== AI ORDERING (DeepSeek Function Calling) ==========
+function sendAI(){
+  if(aiIsLoading)return;
+  var inp=document.getElementById('aiInput');if(!inp)return;var txt=inp.value.trim();if(!txt)return;
+  aiIsLoading=true;
+  aiMessages.push({role:'user',content:txt});inp.value='';
+  // Add typing indicator
+  aiMessages.push({role:'ai',content:'__TYPING__'});
+  renderPage();
+  scrollChatBottom();
+
+  var tableCode=selectedTable?selectedTable.code:'A05';
+  // 实时构建完整上下文 —— 老板改什么DeepSeek就看什么
+  var contextStr=buildRealtimeContext(tableCode);
+  var sysPrompt='你是"老王烧烤"的AI点餐伙计。每轮对话系统都会把最新的菜单、价格、库存、桌台信息同步给你——老板随时可能改，你每次回复都基于当前最新数据。\n\n';
+  sysPrompt+=contextStr+'\n\n';
+  sysPrompt+='## 你的工作方式（跟着感觉走，别死板）：\n';
+  sysPrompt+='- 客人问推荐→根据人数和场景灵活推荐，烧烤人均5-8串+1-2个素菜+饮品就够了\n';
+  sysPrompt+='- 客人直接报菜名→先确认口味偏好，帮客人估个合适的量\n';
+  sysPrompt+='- 客人说预算→在预算内搭配最优方案，别超\n';
+  sysPrompt+='- 客人问热销→报真实数据，带点自豪感\n';
+  sysPrompt+='- 每次回复记得把当前订单汇总，让客人心里有数\n';
+  sysPrompt+='- 客人说"可以了""就这样""下单吧"之类的话→立刻调用place_order，别磨叽\n';
+  sysPrompt+='- 调用place_order之后别废话，按钮弹出来系统会处理\n';
+  sysPrompt+='\n## 绝对禁止（死命令）：\n';
+  sysPrompt+='- 客人已经下单到后厨的订单，绝对不能说"取消上一单""重新下一单""帮你取消重新来"之类的话。订单一旦提交就不能撤回！\n';
+  sysPrompt+='- 客人想加菜就加菜，想换口味就推荐别的，但永远不要动已经下好的单。\n';
+  sysPrompt+='- 哪怕客人自己说"算了不要了"，你也只能建议他们联系服务员处理，你不能承诺取消。';
+
+  fetch('https://api.deepseek.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer sk-YOUR_DEEPSEEK_API_KEY'},
+    body:JSON.stringify({
+      model:'deepseek-chat',
+      messages:[
+        {role:'system',content:sysPrompt}
+      ].concat(aiMessages.filter(function(m){return m.content!=='__TYPING__'}).map(function(m){return{role:m.role==='ai'?'assistant':m.role,content:m.content}})),
+      tools:[{
+        type:'function',
+        function:{
+          name:'place_order',
+          description:'客人确认要下单了，调用此函数提交订单。系统会自动弹出确认/取消按钮让客人最后把关。',
+          parameters:{
+            type:'object',
+            properties:{
+              table_code:{type:'string',description:'桌台号，必须是'+tableCode},
+              items:{type:'array',items:{type:'object',properties:{name:{type:'string',description:'菜品名称，必须和菜单一字不差'},qty:{type:'integer',description:'数量'},price:{type:'number',description:'单价'},spice:{type:'string',description:'口味辣度或冰量'}},required:['name','qty','price']},description:'订单明细'},
+              total_price:{type:'number',description:'总价，等于每项 price×qty 之和'},
+              note:{type:'string',description:'备注，可选'}
+            },
+            required:['table_code','items','total_price']
+          }
+        }
+      }],
+      temperature:0.7,
+      max_tokens:1024
+    })
+  }).then(function(r){return r.ok?r.json():r.text().then(function(t){throw new Error('API返回 HTTP '+r.status+': '+t.substring(0,200));});})
+  .then(function(d){
+    aiIsLoading=false;
+    aiApiOnline=true;
+    aiMessages=aiMessages.filter(function(m){return m.content!=='__TYPING__'});
+    var msg=d.choices&&d.choices.length>0?d.choices[0].message:null;
+    if(!msg){aiMessages.push({role:'ai',content:'AI大脑短路了，稍后再试试？'});renderPage();return;}
+
+    // Check for tool calls — DeepSeek 决定下单了
+    if(msg.tool_calls&&msg.tool_calls.length>0){
+      var toolCall=msg.tool_calls[0];
+      if(toolCall.function.name==='place_order'){
+        var args;
+        try{args=JSON.parse(toolCall.function.arguments);}catch(e){args=null;}
+        if(args&&args.items&&args.items.length>0){
+          if(msg.content&&msg.content.trim())aiMessages.push({role:'ai',content:msg.content});
+          aiPendingOrder=args;
+          renderPage();
+          scrollChatBottom();
+          showOrderConfirm(args);
+          return;
+        }
+      }
+    }
+
+    var content=msg.content||'抱歉，我暂时没法处理，换个说法试试？';
+    aiMessages.push({role:'ai',content:content});
+    renderPage();
+    scrollChatBottom();
+  })
+  .catch(function(e){
+    aiIsLoading=false;
+    aiApiOnline=false;
+    aiMessages=aiMessages.filter(function(m){return m.content!=='__TYPING__'});
+    var errMsg=e.message||String(e);
+    console.error('DeepSeek API 调用失败:',errMsg);
+    // 显示真实错误原因，方便排查
+    aiMessages.push({role:'ai',content:'⚠️ DeepSeek连接失败，原因：'+errMsg+'\n\n先用本地助手顶着，检查一下网络或API Key。'});
+    renderPage();
+    scrollChatBottom();
+  });
+}
+
+function scrollChatBottom(){
+  setTimeout(function(){
+    var el=document.getElementById('chatMessages');
+    if(el)el.scrollTop=el.scrollHeight;
+  },100);
+}
+
+// ========== ORDER CONFIRMATION MODAL ==========
+function showOrderConfirm(orderData){
+  var overlay=document.createElement('div');
+  overlay.className='order-confirm-overlay';
+  overlay.id='orderConfirmOverlay';
+
+  var itemsHtml=orderData.items.map(function(it){
+    return '<div class="ocd-item"><span class="ocd-name">'+it.name+(it.spice?' <span class="tag tag-orange" style="font-size:10px">'+it.spice+'</span>':'')+'</span><span class="ocd-qty">×'+it.qty+'</span><span class="ocd-price">¥'+(it.price*it.qty).toFixed(2)+'</span></div>';
+  }).join('');
+
+  var noteHtml=orderData.note?'<div class="text-xs text-muted mt-2" style="padding:8px;background:rgba(255,255,255,0.02);border-radius:8px">备注：'+orderData.note+'</div>':'';
+
+  overlay.innerHTML='<div class="order-confirm-dialog anim-fade">'
+    +'<div class="ocd-icon">📋</div>'
+    +'<div class="ocd-title">确认下单</div>'
+    +'<div class="ocd-table">桌号 '+orderData.table_code+'</div>'
+    +'<div class="ocd-divider"></div>'
+    +itemsHtml
+    +'<div class="ocd-total-row"><span class="ocd-total-label">合计</span><span class="ocd-total-price">¥'+orderData.total_price.toFixed(2)+'</span></div>'
+    +noteHtml
+    +'<div class="ocd-btns">'
+      +'<button class="ocd-btn-cancel" id="ocdCancel">取消</button>'
+      +'<button class="ocd-btn-confirm" id="ocdConfirm">✅ 确认下单</button>'
+    +'</div>'
+  +'</div>';
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('ocdConfirm').onclick=function(){confirmAIOrder(orderData);};
+  document.getElementById('ocdCancel').onclick=function(){cancelAIOrder();};
+  overlay.onclick=function(e){if(e.target===overlay)cancelAIOrder();};
+}
+
+function confirmAIOrder(orderData){
+  // Remove modal
+  var overlay=document.getElementById('orderConfirmOverlay');
+  if(overlay)document.body.removeChild(overlay);
+
+  // Create order
+  DB.orderSeq++;
+  var now=new Date();
+  var mm=String(now.getMonth()+1).padStart(2,'0');
+  var dd=String(now.getDate()).padStart(2,'0');
+  var no=mm+dd+'A'+String(DB.orderSeq).padStart(4,'0');
+  var items=orderData.items.map(function(it){
+    var product=DB.products.find(function(p){return p.name===it.name});
+    return{
+      id:Date.now()+Math.random(),
+      name:it.name,
+      spice:it.spice||'默认',
+      qty:it.qty,
+      tag:product?product.tag:'bbq',
+      status:'pending'
+    };
+  });
+
+  DB.orders.unshift({
+    id:DB.orders.length+1,
+    no:no,
+    table:orderData.table_code||'A05',
+    time:new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}),
+    items:items
+  });
+
+  KDS.init();
+
+  // Add success message
+  aiMessages.push({role:'ai',content:'订单已提交！\n\n订单号：'+no+'\n桌号：'+orderData.table_code+'\n共 '+items.length+' 种 '+items.reduce(function(s,i){return s+i.qty},0)+' 件\n合计 ¥'+orderData.total_price.toFixed(2)+'\n\n后厨已开始备餐，请耐心等待 🔥'});
+
+  aiPendingOrder=null;
+  toast('下单成功！'+no);
+  renderPage();
+  scrollChatBottom();
+}
+
+function cancelAIOrder(){
+  var overlay=document.getElementById('orderConfirmOverlay');
+  if(overlay)document.body.removeChild(overlay);
+  aiMessages.push({role:'ai',content:'已取消本次下单。如需修改订单内容，请告诉我。'});
+  aiPendingOrder=null;
+  renderPage();
+  scrollChatBottom();
+}
+
+// ========== LOCAL FALLBACK AI ==========
+function smartAI(txt){
+  // Check for ordering intent locally
+  var menuItems=DB.products.filter(function(p){return p.stock>0});
+  var mentioned=menuItems.filter(function(p){return txt.indexOf(p.name)>=0});
+
+  if(mentioned.length>0){
+    var total=0;
+    var lines=mentioned.map(function(p){
+      var qtyMatch=txt.match(new RegExp(p.name+'\\s*(\\d+)'));
+      var qty=qtyMatch?parseInt(qtyMatch[1]):1;
+      total+=p.price*qty;
+      return p.emoji+' '+p.name+' ×'+qty+' = ¥'+(p.price*qty).toFixed(2);
+    });
+    lines.push('');
+    lines.push('💰 总价：¥'+total.toFixed(2));
+    lines.push('');
+    lines.push('请说"确认下单"来提交订单，或告诉我需要修改的地方。');
+    return lines.join('\n');
+  }
+
+  if(txt.indexOf('热销')>=0||txt.indexOf('卖得好')>=0){
+    var hot=DB.reports.hot.slice(0,3);
+    return '根据今日销售数据：\n\n🥇 '+hot[0].name+'（已售'+hot[0].qty+'份）\n🥈 '+hot[1].name+'（已售'+hot[1].qty+'份）\n🥉 '+hot[2].name+'（已售'+hot[2].qty+'份）';
+  }
+  var nums=(txt.match(/\d+/g)||[]).map(function(n){return parseInt(n)});
+  var people=nums.length>0?nums[0]:3;
+  return '为您推荐 '+people+' 人套餐：\n\n🍢 羊肉串×'+people*3+'(¥'+people*9+')\n🍗 鸡翅×'+people+'(¥'+people*8+')\n🥒 拍黄瓜×1(¥8)\n🥤 可乐×'+people+'(¥'+people*5+')\n\n💰 总价约 ¥'+(people*22+8)+' · 人均¥'+(22+Math.ceil(8/people));
+}
+
+function quickAI(txt){var inp=document.getElementById('aiInput');if(inp){inp.value=txt;sendAI();}}
+
+// ========== RENDER ==========
+function navTo(p){
+  if(p==='order'){selectedTable=null;activeCat='all';Cart.tableId=null;Cart.tableCode='';}
+  page=p;
+  if(p==='ai'){selectedTable=null;Cart.tableCode='';}
+  updateUI();
+  if(window.innerWidth<=900)document.getElementById('sidebar').classList.remove('open');
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
+
+function updateUI(){
+  renderPage();
+  var items=document.querySelectorAll('.nav-item');
+  items.forEach(function(it){it.classList.remove('active');if(it.dataset.page===page)it.classList.add('active');});
+  var badge=document.getElementById('cartBadgeSide');
+  if(badge){if(Cart.total>0){badge.style.display='';badge.textContent=Cart.total;}else{badge.style.display='none';}}
+}
+
+function renderPage(){
+  var title='', html='';
+  switch(page){
+    case 'order': title='扫码点单'; html=renderOrder(); break;
+    case 'ai': title='AI助手'; html=renderAI(); break;
+    case 'kitchen': title='收银结账'; html=renderCheckout(); break;
+    case 'kds': title='KDS厨房显示'; html=renderKDS(); break;
+    case 'inventory': title='库存管理'; html=renderInventory(); break;
+    case 'reports': title='数据报表'; html=renderReports(); break;
+    case 'customers': title='顾客画像'; html=renderCustomers(); break;
+    case 'tables-mgr': title='桌台管理'; html=renderTablesMgr(); break;
+    case 'staff': title='员工管理'; html=renderStaff(); break;
+    case 'shop': title='店铺设置'; html=renderShop(); break;
+    case 'menu-mgr': title='菜品管理'; html=renderMenuMgr(); break;
+    case 'profile': title='我的'; html=renderProfile(); break;
+    default: title='扫码点单'; html=renderOrder();
+  }
+  document.getElementById('pageTitle').textContent=title;
+  document.getElementById('content').innerHTML=html;
+  document.getElementById('tableIndicator').textContent=selectedTable?'桌号 '+selectedTable.code:'';
+}
+
+function renderOrder(){
+  var prodList=DB.products.filter(function(p){return activeCat==='all'||p.cat===activeCat});
+  var html='';
+  if(!selectedTable){
+    html+='<div class="card"><div class="card-title" style="margin-bottom:12px">🍖 选择桌台</div>';
+    DB.tables.areas.forEach(function(a){
+      html+='<div style="margin-bottom:12px"><div class="text-sm text-muted" style="margin-bottom:8px">'+a.name+'</div><div class="grid4">';
+      a.tables.forEach(function(t){html+='<div class="table-card '+t.status+'" onclick="'+(t.status==='free'?'selectedTable={id:'+t.id+',code:\''+t.code+'\'};Cart.tableId='+t.id+';Cart.tableCode=\''+t.code+'\';updateUI()':'')+'"><span class="tc-code">'+t.code+'</span><span class="tc-cap">'+t.cap+'人</span><span class="tc-status">'+(t.status==='free'?'空闲':'使用中')+'</span></div>';});
+      html+='</div></div>';
+    });
+    html+='</div>';
+  }else{
+    html+='<div class="card" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="selectedTable=null;Cart.tableId=null;Cart.tableCode=\'\';updateUI()"><div><span style="font-weight:700">已选桌台：'+selectedTable.code+'</span></div><span class="btn btn-sm btn-ghost">换桌</span></div>';
+  }
+  html+='<div class="cat-tabs"><button class="cat-tab '+(activeCat==='all'?'active':'')+'" onclick="activeCat=\'all\';updateUI()">全部</button>'+DB.cats.map(function(c){return'<button class="cat-tab '+(activeCat===c.type?'active':'')+'" onclick="activeCat=\''+c.type+'\';updateUI()">'+c.emoji+' '+c.name+'</button>';}).join('')+'</div>';
+  html+='<div class="prod-grid">';
+  prodList.forEach(function(p){
+    var q=cartQty(p.id);
+    html+='<div class="prod-card anim-fade"><div class="pc-img">'+p.emoji+'</div><div class="pc-info"><div class="pc-name">'+p.name+(p.hot?' <span class="tag tag-orange">热销</span>':'')+(p.stock>0&&p.stock<=p.alert?' <span class="tag tag-red">仅剩'+p.stock+'</span>':'')+(p.stock<=0?' <span class="tag tag-red">售罄</span>':'')+'</div><div class="pc-desc">'+p.desc+'</div><div class="pc-price">¥'+p.price+'<span class="unit">/'+p.unit+'</span></div></div><div class="pc-actions">'+(q===0?(p.stock>0?'<button class="pc-add" onclick="showSpicePopup('+p.id+')">+</button>':''):'<div class="pc-qty"><button onclick="showSpicePopup('+p.id+')">−</button><span onclick="showSpicePopup('+p.id+')">'+q+'</span><button onclick="showSpicePopup('+p.id+')">+</button></div>')+'</div></div>';
+  });
+  html+='</div>';
+  if(Cart.total>0)html+='<div class="cart-bar"><div class="cb-left" onclick="toggleCart()"><div class="cb-icon">🛒<span class="cb-badge">'+Cart.total+'</span></div><span class="cb-total">¥'+Cart.price.toFixed(2)+'</span></div><button class="cb-submit" onclick="submitOrder()">去下单 →</button></div>';
+  return html;
+}
+
+function toggleCart(){
+  if(Cart.items.length===0)return;
+  var bg=document.createElement('div');bg.className='modal-mask';
+  var itemsHtml=Cart.items.map(function(it){return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><span style="font-weight:600">'+it.emoji+' '+it.name+'</span> <span class="tag tag-orange">'+it.spice+'</span></div><div style="display:flex;align-items:center;gap:12px"><span style="font-weight:700;color:var(--p)">¥'+(it.price*it.qty).toFixed(2)+'</span><div class="pc-qty"><button onclick="Cart.updateQty('+it.pid+','+(it.qty-1)+');document.body.removeChild(this.closest(\'.modal-mask\'));toggleCart();">−</button><span>'+it.qty+'</span><button onclick="Cart.updateQty('+it.pid+','+(it.qty+1)+');document.body.removeChild(this.closest(\'.modal-mask\'));toggleCart();">+</button></div></div></div>';}).join('');
+  bg.innerHTML='<div class="modal-sheet"><div class="ms-header"><span class="ms-title">🛒 购物车 ('+Cart.total+'件)</span><button class="btn btn-sm btn-ghost" onclick="Cart.clear();document.body.removeChild(document.querySelector(\'.modal-mask\'));">清空</button></div>'+itemsHtml+'<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-top:1px solid var(--border);margin-top:8px"><span style="font-size:16px;font-weight:600">合计</span><span style="font-size:22px;font-weight:800;color:var(--p)">¥'+Cart.price.toFixed(2)+'</span></div><button class="btn btn-primary btn-block btn-lg" onclick="document.body.removeChild(document.querySelector(\'.modal-mask\'));submitOrder()">去下单 · ¥'+Cart.price.toFixed(2)+'</button></div>';
+  bg.onclick=function(e){if(e.target===bg)document.body.removeChild(bg);};
+  document.body.appendChild(bg);
+}
+
+function renderAI(){
+  if(aiMessages.length===0){
+    aiMessages=[{role:'ai',content:'你好！我是老王的AI烧烤助手 🔥\n\n直接用自然语言点餐就行，跟我说"我想吃羊肉串、烤茄子、再来瓶啤酒"，我帮你搞定！\n\n💡 也可以试试：\n· "帮我推荐3个人的套餐"\n· "100元预算能点什么"\n· "今天什么卖得好"'}];
+  }
+
+  var html='';
+  // Table selector for AI mode
+  if(!selectedTable){
+    html+='<div class="card"><div class="card-title" style="margin-bottom:12px">🍖 先选个桌台，然后开始AI点餐</div>';
+    DB.tables.areas.forEach(function(a){
+      html+='<div style="margin-bottom:12px"><div class="text-sm text-muted" style="margin-bottom:8px">'+a.name+'</div><div class="grid4">';
+      a.tables.forEach(function(t){
+        html+='<div class="table-card '+t.status+'" onclick="'+(t.status==='free'?'selectedTable={id:'+t.id+',code:\''+t.code+'\'};Cart.tableId='+t.id+';Cart.tableCode=\''+t.code+'\';updateUI()':'')+'"><span class="tc-code">'+t.code+'</span><span class="tc-cap">'+t.cap+'人</span><span class="tc-status">'+(t.status==='free'?'空闲':'使用中')+'</span></div>';
+      });
+      html+='</div></div>';
+    });
+    html+='</div>';
+    return html;
+  }
+
+  var statusColor=aiApiOnline===false?'#f44336':(aiApiOnline===true?'#4caf50':'#ff9800');
+  var statusText=aiApiOnline===false?'离线·本地模式':(aiApiOnline===true?'DeepSeek在线':'');  var statusDot=aiApiOnline!==undefined?'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+statusColor+';margin-right:6px;vertical-align:middle"></span><span style="font-size:12px;color:'+statusColor+'">'+statusText+'</span>':'';
+  html+='<div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px"><span style="font-weight:600">桌台：'+selectedTable.code+'</span>'+statusDot+'</div><span class="btn btn-sm btn-ghost" onclick="selectedTable=null;Cart.tableCode=\'\';aiMessages=[];updateUI()">换桌</span></div>';
+
+  html+='<div class="card" style="flex:1;display:flex;flex-direction:column;padding:16px">';
+  html+='<div id="chatMessages" style="flex:1;overflow-y:auto;max-height:calc(100vh - 320px);padding:8px 0">';
+
+  aiMessages.forEach(function(m,i){
+    if(m.content==='__TYPING__'){
+      html+='<div class="chat-msg ai"><div class="bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div></div>';
+    }else{
+      var display=m.content.replace(/\n/g,'<br>');
+      html+='<div class="chat-msg '+(m.role==='ai'?'ai':'user')+'"><div class="bubble">'+display+'</div></div>';
+    }
+  });
+
+  html+='</div>';
+
+  // Quick words
+  html+='<div class="quick-words">';
+  html+='<span onclick="quickAI(\'帮我推荐3个人的套餐\')">3人套餐</span>';
+  html+='<span onclick="quickAI(\'100元预算能点什么\')">100预算</span>';
+  html+='<span onclick="quickAI(\'今天什么卖得好\')">热销推荐</span>';
+  html+='<span onclick="quickAI(\'我想吃羊肉串、烤茄子、再来瓶啤酒\')">经典搭配</span>';
+  html+='</div>';
+
+  // Input
+  html+='<div class="chat-input-area">';
+  html+='<input id="aiInput" placeholder="说你想吃什么，用自然语言就行..." onkeydown="if(event.key===\'Enter\')sendAI()" '+(aiIsLoading?'disabled':'')+'>';
+  html+='<button onclick="sendAI()" '+(aiIsLoading?'disabled style="opacity:.5"':'')+'>'+(aiIsLoading?'思考中...':'发送')+'</button>';
+  html+='</div>';
+
+  html+='</div>';
+  return html;
+}
+
+function renderCheckout(){
+  var html='<div class="cat-tabs"><button class="cat-tab '+(checkoutTab==='active'?'active':'')+'" onclick="checkoutTab=\'active\';renderPage()">待结账 ('+DB.orders.length+')</button><button class="cat-tab '+(checkoutTab==='history'?'active':'')+'" onclick="checkoutTab=\'history\';renderPage()">历史订单 ('+DB.orderHistory.length+')</button></div>';
+
+  if(checkoutTab==='history'){
+    if(DB.orderHistory.length===0){
+      html+='<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">暂无历史订单</div></div>';
+    }else{
+      DB.orderHistory.slice().reverse().forEach(function(o){
+        o.items.forEach(function(item){
+          item.price=item.price||(DB.products.find(function(p){return p.name===item.name})||{}).price||0;
+        });
+        var total=o.items.reduce(function(s,i){return s+i.price*i.qty},0);
+        html+='<div class="card anim-fade" style="padding:16px;margin-bottom:10px;border-left:3px solid var(--s)"><div class="flex justify-between items-center mb-3"><div><span style="font-weight:700;font-size:15px">🍖 '+o.table+'</span><span style="color:var(--t3);font-size:12px;margin-left:8px">'+o.no+'</span></div><span class="tag tag-green">已结账</span></div>';
+        o.items.forEach(function(item){
+          html+='<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>'+item.name+(item.spice?' <span class="tag tag-orange" style="font-size:10px">'+item.spice+'</span>':'')+' ×'+item.qty+'</span><span style="font-weight:600">¥'+(item.price*item.qty).toFixed(2)+'</span></div>';
+        });
+        html+='<div class="flex justify-between items-center mt-3"><span class="text-sm text-muted">结账时间：'+o.checkoutTime+'</span><span style="font-size:18px;font-weight:800;color:var(--p)">¥'+total.toFixed(2)+'</span></div></div>';
+      });
+    }
+    return html;
+  }
+
+  if(DB.orders.length===0){
+    html+='<div class="empty-state"><div class="es-icon">🎉</div><div class="es-text">当前没有待结账订单</div></div>';
+  }else{
+    DB.orders.forEach(function(o){
+      var total=0;
+      var itemsHtml='';
+      o.items.forEach(function(item){
+        item.price=item.price||(DB.products.find(function(p){return p.name===item.name})||{}).price||0;
+        var subtotal=item.price*item.qty;
+        total+=subtotal;
+        itemsHtml+='<div style="padding:6px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>'+item.name+(item.spice?' <span class="tag tag-orange" style="font-size:10px">'+item.spice+'</span>':'')+' ×'+item.qty+'</span><span style="font-weight:600">¥'+subtotal.toFixed(2)+'</span></div>';
+      });
+      html+='<div class="card anim-fade" style="padding:16px;margin-bottom:12px;border-left:3px solid var(--w)"><div class="flex justify-between items-center mb-3"><div><span style="font-weight:700;font-size:15px">🍖 '+o.table+'</span><span style="color:var(--t3);font-size:12px;margin-left:8px">'+o.no+'</span><span style="color:var(--t3);font-size:12px;margin-left:8px">'+o.time+'</span></div><span class="tag tag-yellow">待结账</span></div>'+itemsHtml+'<div class="flex justify-between items-center mt-3"><span style="font-size:18px;font-weight:800;color:var(--p)">¥'+total.toFixed(2)+'</span><button class="btn btn-primary" onclick="checkoutOrder('+o.id+')" style="padding:10px 24px;font-size:15px">💳 结账</button></div></div>';
+    });
+  }
+  return html;
+}
+
+function checkoutOrder(oid){
+  var o=DB.orders.find(function(x){return x.id===oid});if(!o)return;
+  o.items.forEach(function(item){item.price=item.price||(DB.products.find(function(p){return p.name===item.name})||{}).price||0;});
+  if(!confirm('确认【'+o.table+'】结账？\n订单号：'+o.no+'\n金额：¥'+o.items.reduce(function(s,i){return s+i.price*i.qty},0).toFixed(2)))return;
+  // Move to history
+  o.checkoutTime=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  DB.orderHistory.push(o);
+  // Remove from active orders
+  DB.orders=DB.orders.filter(function(x){return x.id!==oid});
+  // Free the table
+  DB.tables.areas.forEach(function(a){a.tables.forEach(function(t){if(t.code===o.table)t.status='free';})});
+  KDS.init();toast('结账成功！'+o.table+' 已释放');renderPage();
+}
+
+function renderKDS(){
+  KDS.init();
+  var html='<div class="cat-tabs"><button class="cat-tab '+(kdsMode==='kds-table'?'active':'')+'" onclick="kdsMode=\'kds-table\';kdsPage=0;updateUI()">桌台菜品</button><button class="cat-tab '+(kdsMode==='kds-fixed'?'active':'')+'" onclick="kdsMode=\'kds-fixed\';kdsFixedOrder=[];updateUI()">菜品看板</button><button class="cat-tab '+(kdsMode==='kds-quick'?'active':'')+'" onclick="kdsMode=\'kds-quick\';updateUI()">快速传菜</button></div>';
+  if(kdsMode==='kds-table'){
+    html+='<div class="grid2">';
+    KDS.tableOrders.forEach(function(to){
+      var urgency=to.elapsed>=45?'urgent':'';
+      html+='<div class="kitchen-card '+urgency+' anim-fade"><div class="kc-header"><span class="kc-table">'+to.tableCode+' <span class="text-xs text-muted">'+to.people+'人</span><br><span class="text-xs" style="color:var(--s)">'+to.orderNo+'</span>'+(urgency?' <span class="tag tag-red">急</span>':'')+'</span><div class="text-right"><span class="text-xs text-muted">开台 '+to.openTime+'</span><br><span style="font-size:12px;color:'+(urgency?'var(--d)':'var(--s)')+'">⏱ '+to.elapsed+'分钟</span></div></div>';
+      to.items.forEach(function(item){
+        var isServed=item.status==='served',isCooked=item.status==='cooked';
+        var btnText=isServed?'已上':isCooked?'待传':'上菜';
+        var btnClass=isServed?'btn-success':isCooked?'btn-warn':'btn-outline';
+        html+='<div class="kc-item '+(isServed?'done':'')+'" style="background:'+(isServed?'rgba(34,197,94,0.06)':isCooked?'rgba(245,158,11,0.06)':'')+'"><span>'+item.name+' <span class="tag tag-orange" style="font-size:10px">'+item.spice+'</span></span><div class="flex items-center gap-3"><span class="kc-item-qty">×'+item.qty+'</span><button class="btn btn-sm '+btnClass+'" onclick="kdsMarkServed(\''+to.tableCode+'\',\''+item.name+'\',\''+item.spice+'\')">'+btnText+'</button></div></div>';
+      });
+      html+='</div>';
+    });
+    html+='</div>';
+  }else if(kdsMode==='kds-fixed'){
+    if(kdsFixedOrder.length===0){
+      var dishMap={};
+      KDS.allOrders.forEach(function(o){if(o.status!=='pending')return;var key=o.name+'_'+o.spice;if(!dishMap[key])dishMap[key]={name:o.name,spice:o.spice,total:0,tables:{}};dishMap[key].total+=o.qty;dishMap[key].tables[o.tableCode]=(dishMap[key].tables[o.tableCode]||0)+o.qty;});
+      kdsFixedOrder=Object.values(dishMap).sort(function(a,b){return b.total-a.total});
+    }
+    html+='<div class="grid4">';
+    kdsFixedOrder.forEach(function(d,i){
+      var colors=['#FF6B35','#7C3AED','#22C55E','#F59E0B','#3B82F6','#EF4444'];
+      var c=colors[i%colors.length];
+      var tableStr=Object.keys(d.tables).map(function(t){return t+'×'+d.tables[t]}).join(' ');
+      html+='<div class="card text-center" style="border:2px solid '+c+'"><div class="text-xs text-muted mb-2">'+tableStr+'</div><div style="font-weight:700;font-size:15px">'+d.name+'</div><div class="tag tag-orange mt-2" style="font-size:10px">'+d.spice+'</div><div style="font-size:28px;font-weight:800;color:'+c+';margin:8px 0">×'+d.total+'</div><button class="btn btn-sm" style="background:'+c+';color:#fff" onclick="kdsMarkDishDone(\''+d.name+'\',\''+d.spice+'\')">完成</button></div>';
+    });
+    html+='</div>';
+  }else if(kdsMode==='kds-quick'){
+    var merged={};
+    KDS.allOrders.forEach(function(o){if(o.status!=='cooked')return;var key=o.name+'_'+o.spice+'_'+o.tableCode;if(!merged[key])merged[key]={name:o.name,spice:o.spice,tableCode:o.tableCode,qty:0};merged[key].qty+=o.qty;});
+    var quickList=Object.values(merged).sort(function(a,b){return b.qty-a.qty});
+    html+='<div class="grid4">';
+    quickList.forEach(function(d,i){
+      var colors=['#FF6B35','#7C3AED','#22C55E','#F59E0B'];
+      var c=colors[i%colors.length];
+      html+='<div class="card text-center" style="border:2px solid '+c+'"><div style="font-weight:700;font-size:15px">'+d.name+'</div><div class="tag tag-orange mt-2" style="font-size:10px">'+d.spice+'</div><div style="font-size:28px;font-weight:800;color:'+c+';margin:8px 0">×'+d.qty+'</div><div class="text-xs text-muted mb-2">'+d.tableCode+'</div><button class="btn btn-sm" style="background:'+c+';color:#fff" onclick="kdsMarkAllDone(\''+d.name+'\',\''+d.spice+'\',\''+d.tableCode+'\')">传菜</button></div>';
+    });
+    html+='</div>';
+  }
+  return html;
+}
+
+function renderInventory(){
+  var html='<div class="cat-tabs"><button class="cat-tab '+(invTab==='overview'?'active':'')+'" onclick="invTab=\'overview\';updateUI()">总览</button><button class="cat-tab '+(invTab==='alerts'?'active':'')+'" onclick="invTab=\'alerts\';updateUI()">预警</button><button class="cat-tab '+(invTab==='log'?'active':'')+'" onclick="invTab=\'log\';updateUI()">流水</button></div>';
+  if(invTab==='overview'){
+    html+='<div class="card"><div class="table-wrap"><table><tr><th>菜品</th><th>价格</th><th>库存</th><th>状态</th><th>操作</th></tr>';
+    DB.products.forEach(function(p){
+      html+='<tr><td>'+p.emoji+' <b>'+p.name+'</b></td><td>¥'+p.price+'/'+p.unit+'</td><td><span style="font-size:18px;font-weight:700;color:'+(p.stock<=p.alert?'var(--d)':'var(--p)')+'">'+p.stock+'</span></td><td>'+(p.stock<=0?'<span class="tag tag-red">售罄</span>':p.stock<=p.alert?'<span class="tag tag-yellow">偏低</span>':'<span class="tag tag-green">充足</span>')+'</td><td><button class="btn btn-sm btn-success" onclick="adjustStock('+p.id+',1);updateUI()">+</button> <button class="btn btn-sm btn-danger" onclick="adjustStock('+p.id+',-1);updateUI()">-</button></td></tr>';
+    });
+    html+='</table></div></div>';
+  }else if(invTab==='alerts'){
+    var alerts=DB.products.filter(function(p){return p.stock<=p.alert});
+    if(alerts.length===0)html+='<div class="empty-state"><div class="es-icon">👍</div><div class="es-text">库存充足</div></div>';
+    else{
+      html+='<button class="btn btn-primary btn-block mb-3" onclick="restockAll()">⚡ 一键补货（补至预警线+10）</button>';
+      alerts.forEach(function(p){html+='<div class="card" style="border-left:3px solid var(--d)"><div class="flex justify-between items-center"><div><div style="font-weight:600">'+p.emoji+' '+p.name+'</div><div class="text-sm text-muted">仅剩'+p.stock+p.unit+'（预警线'+p.alert+'）</div></div><button class="btn btn-sm btn-outline" onclick="adjustStock('+p.id+','+(p.alert-p.stock+10)+');updateUI()">补货</button></div></div>';});
+    }
+  }else if(invTab==='log'){
+    DB.totalFlowLog.forEach(function(l){html+='<div class="card" style="padding:12px 16px;margin-bottom:8px"><div class="flex justify-between"><span>'+(l.type==='in'?'📥':'📤')+' <b>'+l.product+'</b> <span style="color:'+(l.type==='in'?'var(--s)':'var(--d)')+';font-weight:700">'+(l.type==='in'?'+'+l.qty:'-'+l.qty)+'</span></span><span class="text-xs text-muted">'+l.time+'</span></div><div class="text-xs text-muted mt-2">'+(l.operator?'操作人: '+l.operator:'订单: '+l.order)+'</div></div>';});
+  }
+  return html;
+}
+
+function renderReports(){
+  var html='<div class="cat-tabs">'+['daily','monthly','hot','biz','alert'].map(function(t){var names={daily:'日报',monthly:'月报',hot:'热销',biz:'经营分析',alert:'预警'};return'<button class="cat-tab '+(reportTab===t?'active':'')+'" onclick="reportTab=\''+t+'\';updateUI()">'+names[t]+'</button>';}).join('')+'</div>';
+  if(reportTab==='daily'||reportTab==='monthly'){
+    var d=DB.reports[reportTab];
+    html+='<div class="grid3"><div class="stat-card"><div class="st-value">'+d.orders+'</div><div class="st-label">订单数</div></div><div class="stat-card"><div class="st-value">¥'+d.revenue+'</div><div class="st-label">总营收</div></div><div class="stat-card accent"><div class="st-value">¥'+(d.revenue/d.orders).toFixed(0)+'</div><div class="st-label">客单价</div></div></div>';
+  }else if(reportTab==='hot'){
+    DB.reports.hot.forEach(function(h,i){
+      html+='<div class="card" style="padding:12px 16px;margin-bottom:8px"><div class="flex items-center gap-3"><span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:'+(i===0?'var(--p)':i===1?'var(--a)':i===2?'var(--w)':'rgba(255,255,255,0.06)')+';color:'+(i<2?'#fff':i===2?'#000':'var(--t2)')+'">'+(i+1)+'</span><span style="flex:1;font-weight:500">'+h.name+'</span><span style="font-size:18px;font-weight:700;color:var(--p)">'+h.qty+'串</span></div></div>';
+    });
+  }else if(reportTab==='biz'){
+    var trend=DB.deepData.avgOrderTrend;var td=DB.deepData.tableTurnover;
+    html+='<div class="grid2 mb-4"><div class="stat-card"><div class="st-value">¥'+trend[trend.length-1].toFixed(1)+'</div><div class="st-label">今日客单价</div></div><div class="stat-card good"><div class="st-value">'+td.avg+'次</div><div class="st-label">日均翻台率</div></div></div>';
+    html+='<div class="card"><div class="card-title mb-3">📊 畅销时段分布</div>';
+    var maxO=Math.max.apply(null,DB.deepData.peakHours.map(function(h){return h.orders}));
+    DB.deepData.peakHours.forEach(function(h){html+='<div class="bar-item"><span class="bar-label">'+h.hour+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(h.orders/maxO*100)+'%;background:linear-gradient(90deg,var(--p),#FF8C00)"></div></div><span class="bar-val">'+h.orders+'单 ¥'+h.revenue+'</span></div>';});
+    html+='</div>';
+  }else if(reportTab==='alert'){
+    DB.deepData.anomalyAlerts.forEach(function(a){html+='<div class="card" style="border-left:3px solid '+(a.level==='high'?'var(--d)':'var(--w)')+';margin-bottom:8px"><div class="flex justify-between"><div><div style="font-weight:600">'+a.type+'</div><div class="text-sm text-muted">'+a.desc+'</div></div><div><span class="tag '+(a.level==='high'?'tag-red':'tag-yellow')+'">'+(a.level==='high'?'高风险':'中风险')+'</span><div class="text-xs text-muted text-right mt-2">'+a.time+'</div></div></div></div>';});
+  }
+  return html;
+}
+
+function renderCustomers(){
+  var html='<div class="card"><div class="card-title mb-3">📊 客群细分</div>';
+  DB.deepData.customerSegments.forEach(function(s){html+='<div class="card" style="padding:12px 16px;margin-bottom:8px"><div class="flex justify-between items-center"><div><div style="font-weight:600">'+s.type+'</div><div class="text-xs text-muted">人均¥'+s.avgSpend.toFixed(1)+' · 月均'+s.freq.toFixed(1)+'次</div></div><span style="font-size:18px;font-weight:700;color:var(--p)">'+(s.pct*100).toFixed(0)+'%</span></div></div>';});
+  html+='</div><div class="card"><div class="card-title mb-3">🌶️ 口味偏好</div>';
+  DB.deepData.tastePreference.forEach(function(t){html+='<div class="bar-item"><span class="bar-label">'+t.taste+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(t.pct*100)+'%;background:linear-gradient(90deg,var(--p),var(--d))"></div></div><span class="bar-val">'+(t.pct*100).toFixed(0)+'% · ¥'+t.avgSpend.toFixed(1)+'</span></div>';});
+  html+='</div><div class="card"><div class="card-title mb-3">🔮 复购预测</div>';
+  DB.deepData.repurchasePrediction.forEach(function(r){var pc=r.prob>=0.8?'var(--s)':r.prob>=0.6?'var(--w)':'var(--d)';html+='<div class="bar-item"><span class="bar-label">'+r.segment+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(r.prob*100)+'%;background:'+pc+'"></div></div><span class="bar-val">'+(r.prob*100).toFixed(0)+'% · '+r.nextVisit+'天后</span></div>';});
+  html+='</div>';
+  return html;
+}
+
+function renderTablesMgr(){
+  var html='';
+  DB.tables.areas.forEach(function(a){
+    html+='<div class="card"><div class="card-header"><span style="font-weight:700;font-size:15px">'+a.name+'</span><div class="flex gap-2"><button class="btn btn-sm btn-outline" onclick="addTableToArea('+a.id+')">+ 桌台</button><button class="btn btn-sm btn-danger" onclick="deleteArea('+a.id+')">删除区域</button></div></div><div class="grid4">';
+    a.tables.forEach(function(t){
+      html+='<div class="table-card '+t.status+'" onclick="editTable('+a.id+','+t.id+')"><span class="tc-code">'+t.code+'</span><span class="tc-cap">'+t.cap+'人</span><span class="tc-status">'+(t.status==='free'?'空闲':'使用中')+'</span><span class="tc-del" onclick="event.stopPropagation();deleteTable('+a.id+','+t.id+')" title="删除桌台">✕</span></div>';
+    });
+    html+='</div></div>';
+  });
+  html+='<button class="btn btn-primary btn-block mt-3" onclick="addArea()">+ 新建区域</button>';
+  return html;
+}
+
+function addTableToArea(aid){
+  var area=DB.tables.areas.find(function(a){return a.id===aid});if(!area)return;
+  var code=prompt('桌号（如 A06）：');if(!code||!code.trim())return;
+  var cap=parseInt(prompt('容纳人数（默认4）：')||'4');
+  var maxId=0;DB.tables.areas.forEach(function(a){a.tables.forEach(function(t){if(t.id>maxId)maxId=t.id})});
+  area.tables.push({id:maxId+1,code:code.trim(),cap:cap,status:'free'});toast('桌台 '+code.trim()+' 已添加');updateUI();
+}
+function deleteArea(aid){if(!confirm('确定删除该区域及所有桌台？'))return;DB.tables.areas=DB.tables.areas.filter(function(a){return a.id!==aid});toast('区域已删除');updateUI();}
+function addArea(){
+  var name=prompt('区域名称（如：户外、二楼）：');if(!name||!name.trim())return;
+  DB.tables.areas.push({id:DB.tables.areas.length+1,name:name.trim(),tables:[]});toast('区域已添加');updateUI();
+}
+function deleteTable(aid,tid){
+  if(!confirm('确定删除该桌台？'))return;
+  var area=DB.tables.areas.find(function(a){return a.id===aid});if(!area)return;
+  area.tables=area.tables.filter(function(t){return t.id!==tid});toast('桌台已删除');updateUI();
+}
+function editTable(aid,tid){
+  var area=DB.tables.areas.find(function(a){return a.id===aid});if(!area)return;
+  var table=area.tables.find(function(t){return t.id===tid});if(!table)return;
+  var newCode=prompt('新桌号：',table.code);if(!newCode||!newCode.trim())return;
+  var newCap=parseInt(prompt('新容纳人数：',table.cap));if(isNaN(newCap)||newCap<1)return;
+  table.code=newCode.trim();table.cap=newCap;toast('桌台已更新');updateUI();
+}
+
+function renderMenuMgr(){
+  var html='<div class="card"><div class="card-header"><span style="font-weight:700;font-size:15px">菜品分类</span><button class="btn btn-sm btn-outline" onclick="addCat()">+ 分类</button></div><div class="flex flex-wrap gap-2 mb-3">';
+  DB.cats.forEach(function(c){
+    var cnt=DB.products.filter(function(p){return p.cat===c.type}).length;
+    html+='<div class="tag" style="cursor:pointer;padding:6px 12px" onclick="editCat('+c.id+')">'+c.emoji+' '+c.name+'（'+cnt+'）<span style="margin-left:4px;opacity:0.5" onclick="event.stopPropagation();deleteCat('+c.id+')" title="删除分类">✕</span></div>';
+  });
+  html+='</div></div><div class="card"><div class="card-header"><span style="font-weight:700;font-size:15px">菜品列表</span><button class="btn btn-sm btn-primary" onclick="addProduct()">+ 菜品</button></div>';
+  html+='<table style="width:100%;font-size:13px;text-align:left"><thead><tr><th>名称</th><th>分类</th><th>单价</th><th>单位</th><th>库存</th><th>警戒</th><th>热销</th><th>操作</th></tr></thead><tbody>';
+  DB.products.forEach(function(p){
+    var cat=DB.cats.find(function(c){return c.type===p.cat});
+    html+='<tr><td>'+p.emoji+' '+p.name+'</td><td>'+(cat?cat.name:p.cat)+'</td><td>¥'+p.price+'</td><td>'+p.unit+'</td><td>'+p.stock+'</td><td>'+p.alert+'</td><td>'+(p.hot?'🔥':'')+'</td><td><button class="btn btn-sm btn-outline" onclick="editProduct('+p.id+')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteProduct('+p.id+')">删除</button></td></tr>';
+  });
+  html+='</tbody></table></div>';
+  return html;
+}
+function addCat(){
+  var name=prompt('分类名称（如：小食、套餐）：');if(!name||!name.trim())return;
+  var type=prompt('分类标识（英文，如：snack）：');if(!type||!type.trim())return;
+  if(DB.cats.find(function(c){return c.type===type.trim()})){toast('该标识已存在');return;}
+  var emoji=prompt('图标emoji：')||'🍽️';
+  var maxId=0;DB.cats.forEach(function(c){if(c.id>maxId)maxId=c.id});
+  DB.cats.push({id:maxId+1,name:name.trim(),type:type.trim(),emoji:emoji});toast('分类已添加');updateUI();
+}
+function editCat(cid){
+  var cat=DB.cats.find(function(c){return c.id===cid});if(!cat)return;
+  var name=prompt('新分类名称：',cat.name);if(!name||!name.trim())return;
+  var emoji=prompt('新图标：',cat.emoji);
+  cat.name=name.trim();cat.emoji=emoji||cat.emoji;toast('分类已更新');updateUI();
+}
+function deleteCat(cid){
+  var cat=DB.cats.find(function(c){return c.id===cid});if(!cat)return;
+  if(DB.products.some(function(p){return p.cat===cat.type})){toast('该分类下还有菜品，无法删除');return;}
+  if(!confirm('确定删除分类「'+cat.name+'」？'))return;
+  DB.cats=DB.cats.filter(function(c){return c.id!==cid});toast('分类已删除');updateUI();
+}
+function addProduct(){
+  var name=prompt('菜品名称：');if(!name||!name.trim())return;
+  var price=parseFloat(prompt('单价（元）：'));if(isNaN(price)||price<=0)return;
+  var unit=prompt('单位（如：串/份/瓶）：')||'份';
+  var desc=prompt('描述：')||'';
+  var catOptions=DB.cats.map(function(c){return c.type+'='+c.name}).join(', ');
+  var cat=prompt('分类（'+catOptions+'）：');if(!cat||!cat.trim())return;
+  if(!DB.cats.find(function(c){return c.type===cat.trim()})){toast('分类不存在');return;}
+  var stock=parseInt(prompt('库存：')||'0');
+  var alert=parseInt(prompt('库存预警值：')||'10');
+  var emoji=prompt('emoji图标：')||'🍽️';
+  var hot=confirm('是否设为热销？');
+  var maxId=0;DB.products.forEach(function(p){if(p.id>maxId)maxId=p.id});
+  DB.products.push({id:maxId+1,name:name.trim(),price:price,unit:unit,desc:desc,cat:cat.trim(),tag:cat.trim(),stock:stock,alert:alert,hot:hot,emoji:emoji});toast('菜品已添加');updateUI();
+}
+function editProduct(pid){
+  var p=DB.products.find(function(x){return x.id===pid});if(!p)return;
+  var name=prompt('新名称：',p.name);if(!name||!name.trim())return;
+  var price=parseFloat(prompt('新单价：',p.price));if(isNaN(price)||price<=0)return;
+  var unit=prompt('新单位：',p.unit)||'份';
+  var desc=prompt('新描述：',p.desc)||'';
+  var catOptions=DB.cats.map(function(c){return c.type+'='+c.name}).join(', ');
+  var cat=prompt('新分类（'+catOptions+'）：',p.cat);if(!cat||!cat.trim())return;
+  var stock=parseInt(prompt('新库存：',p.stock));
+  var alert=parseInt(prompt('新预警值：',p.alert));
+  var emoji=prompt('新emoji：',p.emoji)||'🍽️';
+  var hot=confirm('是否设为热销？（当前：'+(p.hot?'是':'否')+'）');
+  p.name=name.trim();p.price=price;p.unit=unit;p.desc=desc;p.cat=cat.trim();p.tag=cat.trim();p.stock=stock;p.alert=alert;p.emoji=emoji;p.hot=hot;toast('菜品已更新');updateUI();
+}
+function deleteProduct(pid){
+  var p=DB.products.find(function(x){return x.id===pid});if(!p)return;
+  if(!confirm('确定删除「'+p.name+'」？'))return;
+  DB.products=DB.products.filter(function(x){return x.id!==pid});toast('菜品已删除');updateUI();
+}
+
+function renderStaff(){
+  var html='';
+  DB.staff.forEach(function(s){html+='<div class="card" style="padding:14px 16px;margin-bottom:8px"><div class="flex justify-between items-center"><div><div style="font-weight:600;font-size:15px">'+s.name+'</div><div class="text-sm text-muted">'+s.role+' | '+s.phone+'</div></div><button class="btn btn-sm btn-danger">删除</button></div></div>';});
+  html+='<button class="btn btn-primary btn-block mt-3" onclick="toast(\'添加员工功能开发中\')">+ 添加员工</button>';
+  return html;
+}
+
+function renderShop(){
+  return '<div class="card"><div style="margin-bottom:14px"><div class="text-sm text-muted mb-1">店铺名称</div><input style="width:100%;height:42px;padding:0 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--t1)" value="老王烧烤"></div><div style="margin-bottom:14px"><div class="text-sm text-muted mb-1">联系电话</div><input style="width:100%;height:42px;padding:0 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--t1)" value="13800000000"></div><div style="margin-bottom:14px"><div class="text-sm text-muted mb-1">店铺地址</div><input style="width:100%;height:42px;padding:0 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--t1)" value="XX市XX区美食街88号"></div><div style="margin-bottom:14px"><div class="text-sm text-muted mb-1">营业时间</div><input style="width:100%;height:42px;padding:0 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;font-size:14px;color:var(--t1)" value="17:00-02:00"></div><button class="btn btn-primary btn-block mt-3" onclick="toast(\'保存成功\')">保存</button></div>';
+}
+
+function renderProfile(){
+  var html='<div class="card"><div class="flex items-center gap-3"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--p),var(--a));display:flex;align-items:center;justify-content:center;font-size:28px">👨‍🍳</div><div><div style="font-size:18px;font-weight:700">老王</div><div class="tag tag-orange">店长</div></div></div></div>';
+  html+='<div class="card"><div class="card-title">老王烧烤</div><div class="text-sm text-muted mt-2">Pro版 · 已激活</div></div>';
+  html+='<div class="card"><div class="card-title mb-3">功能入口</div>';
+  [{icon:'🏪',label:'店铺信息',page:'shop'},{icon:'🍖',label:'桌台管理',page:'tables-mgr'},{icon:'👥',label:'员工管理',page:'staff'},{icon:'📦',label:'库存管理',page:'inventory'},{icon:'📊',label:'数据报表',page:'reports'}].forEach(function(m){
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="navTo(\''+m.page+'\')"><span>'+m.icon+' '+m.label+'</span><span class="text-muted">→</span></div>';
+  });
+  html+='</div><div class="text-center mt-4"><span class="text-sm text-muted" style="cursor:pointer" onclick="page=\'order\';Cart.clear();aiMessages=[];updateUI()">退出登录</span></div>';
+  return html;
+}
+
+// ========== INIT ==========
+renderPage();
+updateUI();
+
+// Close sidebar on outside click
+document.addEventListener('click',function(e){var s=document.getElementById('sidebar');if(window.innerWidth<=900&&!s.contains(e.target)&&e.target!==document.getElementById('mobileToggle')){s.classList.remove('open');}});
+
+// Responsive sidebar
+window.addEventListener('resize',function(){if(window.innerWidth>900)document.getElementById('sidebar').classList.remove('open');});
+</script>
+</body>
+</html>
